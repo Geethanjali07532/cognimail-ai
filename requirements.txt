@@ -1,35 +1,11 @@
-# AI Email Classification & Smart Reply System
-# Module 2 - Environment Setup
-# Install with: pip install -r requirements.txt
-
-# Data processing
-pandas
-numpy
-matplotlib
-seaborn
-
-# Machine learning
-scikit-learn
-xgboost
-
-# NLP
-nltk
-spacy
-transformers
-torch
-sentence-transformers
-
-# API development
-fastapi
-uvicorn
-
-# Application interface
-streamlit
-plotly
-
-# Database
-sqlalchemy
-psycopg2-binary
-
-# Notebook (optional, for development)
-notebook
+fastapi>=0.100.0
+uvicorn>=0.23.0
+scikit-learn>=1.3.0
+xgboost>=1.7.0
+pandas>=2.0.0
+numpy>=1.24.0
+spacy>=3.6.0
+nltk>=3.8.0
+joblib>=1.3.0
+scipy>=1.10.0
+pydantic>=2.0.0
