@@ -56,23 +56,8 @@ recommender_engine: Optional[ResponseRecommender] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Pre-warm and initialize all AI model artifacts on startup."""
-    global smart_reply_engine, pattern_engine, summarizer_engine, recommender_engine
-    print("[FastAPI Startup] Initializing AI Intelligence Engines...")
-    t0 = time.time()
-    
-    # Pre-cache inference artifacts in memory
-    classify_email.load_inference_artifacts()
-    analyze_sentiment_emotion.load_sentiment_artifacts()
-    predict_priority.load_priority_artifacts()
-    
-    # Initialize engines
-    smart_reply_engine = SmartReplyEngine()
-    pattern_engine = EmailPatternEngine()
-    summarizer_engine = EmailSummarizer()
-    recommender_engine = ResponseRecommender()
-    
-    print(f"[FastAPI Startup] All AI Models Pre-warmed in {time.time() - t0:.2f}s")
+    """Lightweight startup: Models load on-demand to strictly stay well under 512MB RAM."""
+    print("[FastAPI Startup] CogniMail AI Cloud Service online. AI models configured for on-demand lazy loading.")
     yield
     print("[FastAPI Shutdown] Shutting down AI Intelligence Service.")
 
