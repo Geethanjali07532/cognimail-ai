@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogniMail AI — Enterprise Email Intelligence & Smart Reply Cockpit</title>
+  <meta name="description" content="State-of-the-art enterprise AI platform for automated email classification, sentiment analysis, priority triage, entity extraction, and 7-tone context-aware smart replies.">
+  
+  <!-- Modern Typography: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-logo-glow">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">CogniMail <span class="accent-text">AI</span></div>
+          <div class="brand-subtitle">Autonomous Triage & Smart Reply Cockpit</div>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Status Pills -->
+      <div class="header-telemetry">
+        <div class="status-pill status-live" title="All 15 ML inference models loaded in memory">
+          <span class="pulse-dot"></span>
+          <span class="status-label">15 AI Engines Live</span>
+        </div>
+        <div class="metric-pill" id="latencyIndicator" title="Measured end-to-end inference latency">
+          <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <span id="latencyValue">~92 ms</span>
+        </div>
+        <a href="/docs" target="_blank" class="api-doc-link" title="Open interactive Swagger REST API documentation">
+          <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Swagger API</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Quick Scenario Presets Strip -->
+  <section class="presets-bar" aria-label="Demo Presets">
+    <div class="presets-container">
+      <span class="presets-title">
+        <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="10 8 16 12 10 16 10 8"></polygon>
+        </svg>
+        Instant Presets:
+      </span>
+      <div class="presets-scroll">
+        <button type="button" class="preset-chip active" data-preset="billing_dispute">
+          <span class="preset-emoji">💳</span> Billing Dispute
+        </button>
+        <button type="button" class="preset-chip" data-preset="server_outage">
+          <span class="preset-emoji">🚨</span> Critical Outage
+        </button>
+        <button type="button" class="preset-chip" data-preset="phishing_trap">
+          <span class="preset-emoji">🎣</span> Phishing & Malware
+        </button>
+        <button type="button" class="preset-chip" data-preset="job_application">
+          <span class="preset-emoji">💼</span> HR Candidate
+        </button>
+        <button type="button" class="preset-chip" data-preset="sales_inquiry">
+          <span class="preset-emoji">📈</span> Enterprise Sales
+        </button>
+        <button type="button" class="preset-chip" data-preset="refund_request">
+          <span class="preset-emoji">📦</span> Defective Order
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Workstation Layout -->
+  <main class="main-layout">
+    <!-- LEFT COLUMN: INBOUND COMPOSER -->
+    <section class="workspace-panel composer-panel" aria-label="Email Input Panel">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-badge">INPUT</span>
+          <h2 class="panel-title">Inbound Email Stream</h2>
+        </div>
+        <div class="panel-controls">
+          <button type="button" id="randomBtn" class="btn-ghost" title="Load random enterprise sample">
+            <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+            Random
+          </button>
+          <button type="button" id="clearBtn" class="btn-ghost" title="Clear all fields">
+            <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <form id="emailForm" class="composer-form">
+        <!-- Sender Field -->
+        <div class="form-group">
+          <label for="senderInput" class="form-label">
+            <span>Sender Address</span>
+            <span class="field-hint">MIME From: header</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input type="email" id="senderInput" class="text-input" placeholder="client@company.com" value="patricia.miller@vortexlogistics.com" required>
+          </div>
+        </div>
+
+        <!-- Subject Field -->
+        <div class="form-group">
+          <label for="subjectInput" class="form-label">
+            <span>Subject Line</span>
+            <span class="field-hint">Priority & category classifier feature</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+            <input type="text" id="subjectInput" class="text-input" placeholder="Enter email subject..." value="URGENT: Overcharged on Invoice #INV-88219 - Please rectify" required>
+          </div>
+        </div>
+
+        <!-- Body Field -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <label for="bodyInput" class="form-label">Email Body Content</label>
+            <span id="charCount" class="char-count">0 words</span>
+          </div>
+          <textarea id="bodyInput" class="textarea-input" rows="8" placeholder="Paste full inbound email body here..." required>Hello Support,
+
+I am writing with extreme frustration regarding Invoice #INV-88219 issued on September 05, 2026. My account was charged $1,450.00 instead of the agreed contract rate of $950.00. That is an unauthorized overcharge of $500.00!
+
+Our accounts payable department cannot close the ledger until this credit note is posted. We require this resolved by tomorrow, September 10 at 3:00 PM EST, or we will be forced to cancel our enterprise subscription (Account ID: ACC-90142).
+
+Please reach out to me immediately at (415) 890-2341.
+
+Best regards,
+Patricia Miller
+Director of Logistics, Vortex Corp</textarea>
+        </div>
+
+        <!-- Attachment Simulation Chips -->
+        <div class="form-group">
+          <label class="form-label">
+            <span>Simulated Attachments</span>
+            <span class="field-hint">Security & malware inspection</span>
+          </label>
+          <div id="attachmentsContainer" class="attachments-list">
+            <span class="attachment-chip" data-filename="invoice_88219.pdf">
+              <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>invoice_88219.pdf</span>
+              <button type="button" class="remove-att-btn" title="Remove attachment">&times;</button>
+            </span>
+          </div>
+          <div class="add-attachment-bar">
+            <input type="text" id="newAttInput" class="mini-text-input" placeholder="e.g. statement.xlsx or invoice.exe">
+            <button type="button" id="addAttBtn" class="btn-secondary-sm">+ Attach</button>
+          </div>
+        </div>
+
+        <!-- Submit & Analysis Action Bar -->
+        <div class="action-bar">
+          <button type="submit" id="analyzeBtn" class="btn-primary-action">
+            <span class="btn-spinner" id="btnSpinner"></span>
+            <svg class="btn-icon" id="btnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span id="btnText">Analyze with 15 AI Models</span>
+            <span class="kbd-badge">Ctrl+↵</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- RIGHT COLUMN: TELEMETRY & SMART REPLY STUDIO -->
+    <section class="workspace-panel telemetry-panel" aria-label="AI Intelligence Telemetry">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-badge accent">INTELLIGENCE</span>
+          <h2 class="panel-title">Multi-Model Real-Time Telemetry</h2>
+        </div>
+        <div class="live-tag">
+          <span class="live-dot"></span>
+          <span>AUTONOMOUS PIPELINE</span>
+        </div>
+      </div>
+
+      <!-- Analysis Results Container -->
+      <div id="resultsContainer" class="results-container">
+
+        <!-- 1. Executive Triage Matrix (4 Metrics) -->
+        <div class="triage-grid">
+          <!-- Category & Intent -->
+          <div class="metric-card" id="cardCategory">
+            <div class="metric-card-header">
+              <span class="metric-icon-bubble category-bubble">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              </span>
+              <span class="metric-type">CATEGORY & INTENT</span>
+            </div>
+            <div class="metric-value-row">
+              <span id="categoryLabel" class="metric-hero-text">Billing & Payments</span>
+              <span id="categoryConfidence" class="confidence-badge">98.4%</span>
+            </div>
+            <div class="metric-sub-row">
+              <span class="sub-label">Intent:</span>
+              <span id="intentLabel" class="sub-value">Dispute Charges</span>
+            </div>
+          </div>
+
+          <!-- Priority & SLA -->
+          <div class="metric-card" id="cardPriority">
+            <div class="metric-card-header">
+              <span class="metric-icon-bubble priority-bubble">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </span>
+              <span class="metric-type">PRIORITY & SLA</span>
+            </div>
+            <div class="metric-value-row">
+              <span id="priorityLabel" class="metric-hero-text badge-p2">P2 - HIGH</span>
+              <span id="urgencyLabel" class="urgency-pill">URGENT</span>
+            </div>
+            <div class="metric-sub-row">
+              <span class="sub-label">Guaranteed SLA:</span>
+              <span id="slaLabel" class="sub-value font-mono">4 Hours (Target 2h)</span>
+            </div>
+          </div>
+
+          <!-- Sentiment & Emotion -->
+          <div class="metric-card" id="cardSentiment">
+            <div class="metric-card-header">
+              <span class="metric-icon-bubble sentiment-bubble">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
+                  <path d="M8 15s1.5 2 4 2 4-2 4-2"></path>
+                  <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                  <line x1="15" y1="15.01" y2="9"></line>
+                </svg>
+              </span>
+              <span class="metric-type">SENTIMENT & EMOTION</span>
+            </div>
+            <div class="metric-value-row">
+              <span id="sentimentLabel" class="metric-hero-text badge-negative">NEGATIVE</span>
+              <span id="emotionLabel" class="emotion-chip">Frustrated / Anger</span>
+            </div>
+            <div class="metric-sub-row">
+              <span class="sub-label">Polarity Gauge:</span>
+              <div class="polarity-track">
+                <div id="polarityBar" class="polarity-fill" style="width: 25%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Screening -->
+          <div class="metric-card" id="cardSecurity">
+            <div class="metric-card-header">
+              <span class="metric-icon-bubble security-bubble" id="securityBubble">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </span>
+              <span class="metric-type">SECURITY & PHISHING</span>
+            </div>
+            <div class="metric-value-row">
+              <span id="securityVerdict" class="metric-hero-text badge-clean">VERIFIED CLEAN</span>
+              <span id="securityScore" class="confidence-badge">99.1% Clean</span>
+            </div>
+            <div class="metric-sub-row">
+              <span class="sub-label">Threats:</span>
+              <span id="securityReason" class="sub-value">No Phishing / Clean File</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Security Banner (conditionally displayed if threat detected) -->
+        <div id="securityAlertBanner" class="security-banner hidden">
+          <div class="security-banner-icon">⚠️</div>
+          <div class="security-banner-content">
+            <div class="security-banner-title">CRITICAL SECURITY WARNING DETECTED</div>
+            <div id="securityBannerDetails" class="security-banner-desc">This email contains blacklisted executable attachments or deceptive phishing indicators.</div>
+          </div>
+        </div>
+
+        <!-- 3. Executive Summaries & Recommendations -->
+        <div class="telemetry-section summary-section">
+          <div class="section-title-row">
+            <h3 class="section-title">
+              <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="21" y1="10" x2="3" y2="10"></line>
+                <line x1="21" y1="6" x2="3" y2="6"></line>
+                <line x1="21" y1="14" x2="3" y2="14"></line>
+                <line x1="21" y1="18" x2="7" y2="18"></line>
+              </svg>
+              Executive AI Summary & Routing
+            </h3>
+            <span class="section-tag" id="routedDepartment">Routing: Finance Tier-2</span>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-text" id="abstractiveSummary">
+              Customer Patricia Miller (Vortex Corp) reports an unauthorized $500 overcharge on Invoice #INV-88219 (billed $1,450 vs agreed $950). Demands credit note resolution by Sept 10 at 3:00 PM EST under threat of subscription cancellation.
+            </div>
+            
+            <!-- Key Bullet Points -->
+            <div class="highlights-container">
+              <div class="highlights-label">Key Highlights:</div>
+              <ul id="highlightsList" class="highlights-list">
+                <li>Disputes Invoice #INV-88219 amount ($1,450 billed vs $950 contracted).</li>
+                <li>Hard deadline set for Sept 10, 3:00 PM EST.</li>
+                <li>Churn risk: Customer threatening cancellation of Account ACC-90142.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Extracted Business Entities & Action Items -->
+        <div class="telemetry-section entities-section">
+          <div class="section-title-row">
+            <h3 class="section-title">
+              <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Extracted Entities & Structured Tokens
+            </h3>
+            <span class="section-tag" id="entityCountTag">6 Entities Found</span>
+          </div>
+
+          <div class="entities-grid" id="entitiesContainer">
+            <!-- Dynamic Entity Pills -->
+            <div class="entity-group">
+              <span class="entity-group-label">Invoices / Orders:</span>
+              <div class="entity-pills-row" id="pillsInvoices">
+                <span class="pill pill-cyan">#INV-88219</span>
+                <span class="pill pill-cyan">ACC-90142</span>
+              </div>
+            </div>
+            <div class="entity-group">
+              <span class="entity-group-label">Monetary Amounts:</span>
+              <div class="entity-pills-row" id="pillsAmounts">
+                <span class="pill pill-emerald">$1,450.00</span>
+                <span class="pill pill-emerald">$950.00</span>
+                <span class="pill pill-emerald">$500.00</span>
+              </div>
+            </div>
+            <div class="entity-group">
+              <span class="entity-group-label">Deadlines / Dates:</span>
+              <div class="entity-pills-row" id="pillsDates">
+                <span class="pill pill-amber">Sept 10, 3:00 PM EST</span>
+                <span class="pill pill-amber">Sept 05, 2026</span>
+              </div>
+            </div>
+            <div class="entity-group">
+              <span class="entity-group-label">Contact / People:</span>
+              <div class="entity-pills-row" id="pillsContacts">
+                <span class="pill pill-indigo">Patricia Miller</span>
+                <span class="pill pill-indigo">(415) 890-2341</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Checklist -->
+          <div class="action-checklist-box">
+            <div class="checklist-header">Automated Action Checklist:</div>
+            <div id="checklistItems" class="checklist-items">
+              <label class="check-item">
+                <input type="checkbox" checked>
+                <span>Audit billing discrepancy against contract terms for ACC-90142</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox">
+                <span>Issue credit note for $500.00 in Stripe / NetSuite</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox">
+                <span>Send revised PDF invoice prior to Sept 10 deadline</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Smart Reply Studio -->
+        <div class="telemetry-section reply-studio-section">
+          <div class="section-title-row">
+            <div class="studio-title-group">
+              <span class="studio-badge">STUDIO</span>
+              <h3 class="section-title">Context-Aware Smart Reply</h3>
+            </div>
+            <div class="reply-meta">
+              <span id="replyValidationScore" class="validation-badge" title="Automated tone alignment & entity recall check">
+                🛡️ Tone Aligned • 98% Recall
+              </span>
+            </div>
+          </div>
+
+          <!-- 7-Tone Switcher Bar -->
+          <div class="tone-bar-container">
+            <span class="tone-bar-label">Selected Persona Tone:</span>
+            <div class="tone-tabs" id="toneTabs" role="tablist">
+              <button type="button" class="tone-tab active" data-tone="Professional">Professional</button>
+              <button type="button" class="tone-tab" data-tone="Empathetic">Empathetic</button>
+              <button type="button" class="tone-tab" data-tone="Concise">Concise</button>
+              <button type="button" class="tone-tab" data-tone="Formal">Formal</button>
+              <button type="button" class="tone-tab" data-tone="Friendly">Friendly</button>
+              <button type="button" class="tone-tab" data-tone="Apologetic">Apologetic</button>
+              <button type="button" class="tone-tab" data-tone="Persuasive">Persuasive</button>
+            </div>
+          </div>
+
+          <!-- Smart Reply Box -->
+          <div class="reply-editor-wrapper">
+            <textarea id="replyTextarea" class="reply-textarea" rows="7" aria-label="Generated smart reply draft">Dear Patricia,
+
+Thank you for bringing this discrepancy regarding Invoice #INV-88219 to our immediate attention. I sincerely apologize for the frustration caused by the $500.00 overcharge.
+
+Our billing team has pulled your master contract for Account ACC-90142 and verified that your authorized rate is $950.00. We have immediately initiated a credit adjustment of $500.00 to correct this billing discrepancy.
+
+Your revised statement and formal credit note will be issued well before your September 10, 3:00 PM EST deadline. If you have any further questions, please do not hesitate to contact our dedicated billing supervisor at billing-priority@support.com.
+
+Sincerely,
+Enterprise Accounts Support Team</textarea>
+          </div>
+
+          <!-- Human-in-the-Loop Governance Controls -->
+          <div class="reply-actions-toolbar">
+            <div class="actions-left">
+              <button type="button" id="copyReplyBtn" class="btn-tool" title="Copy reply to clipboard">
+                <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>Copy Draft</span>
+              </button>
+              <button type="button" id="regenerateBtn" class="btn-tool" title="Regenerate reply with active tone">
+                <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Regenerate</span>
+              </button>
+            </div>
+
+            <div class="actions-right">
+              <button type="button" id="escalateBtn" class="btn-escalate" title="Flag this ticket for Human Supervisor Review">
+                <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span>Flag to Supervisor</span>
+              </button>
+              <button type="button" id="approveBtn" class="btn-approve" title="Approve and log to audit vault">
+                <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Approve & Dispatch</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-metrics">
+        <span class="f-pill">Linear SVM 94.28% F1</span>
+        <span class="f-pill">Random Forest 94.68% F1</span>
+        <span class="f-pill">XGBoost 92.90% F1</span>
+        <span class="f-pill">Spam Filter 98.95% F1</span>
+        <span class="f-pill">Sub-150ms Latency</span>
+      </div>
+      <div class="footer-credits">
+        CogniMail AI Platform • Production Capstone System • Built with FastAPI & Vanilla Modern Web Stack
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

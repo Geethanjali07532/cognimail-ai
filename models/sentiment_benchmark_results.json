@@ -1,0 +1,40 @@
+{
+    "sentiment_benchmarks": {
+        "Logistic Regression": {
+            "Accuracy": 0.9387,
+            "F1": 0.9388
+        },
+        "Linear SVM (Calibrated)": {
+            "Accuracy": 0.9399,
+            "F1": 0.9399
+        },
+        "Random Forest": {
+            "Accuracy": 0.9468,
+            "F1": 0.9468
+        },
+        "XGBoost": {
+            "Accuracy": 0.9364,
+            "F1": 0.9363
+        }
+    },
+    "emotion_benchmarks": {
+        "Logistic Regression": {
+            "Accuracy": 0.9306,
+            "F1": 0.9346
+        },
+        "Linear SVM (Calibrated)": {
+            "Accuracy": 0.9514,
+            "F1": 0.949
+        },
+        "Random Forest": {
+            "Accuracy": 0.9491,
+            "F1": 0.945
+        },
+        "XGBoost": {
+            "Accuracy": 0.9514,
+            "F1": 0.9499
+        }
+    },
+    "best_sentiment_model": "Random Forest",
+    "best_emotion_model": "XGBoost"
+}

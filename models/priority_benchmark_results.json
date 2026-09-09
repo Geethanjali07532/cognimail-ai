@@ -1,0 +1,42 @@
+{
+    "best_priority_model": "XGBoost",
+    "best_priority_f1": 0.9290483184797639,
+    "best_urgency_model": "XGBoost",
+    "best_urgency_f1": 0.9150261395876618,
+    "priority_benchmarks": {
+        "Logistic Regression": {
+            "Accuracy": 0.8925,
+            "F1": 0.8925
+        },
+        "Linear SVM (Calibrated)": {
+            "Accuracy": 0.9145,
+            "F1": 0.9135
+        },
+        "Random Forest": {
+            "Accuracy": 0.9098,
+            "F1": 0.9088
+        },
+        "XGBoost": {
+            "Accuracy": 0.9295,
+            "F1": 0.929
+        }
+    },
+    "urgency_benchmarks": {
+        "Logistic Regression": {
+            "Accuracy": 0.8983,
+            "F1": 0.8981
+        },
+        "Linear SVM (Calibrated)": {
+            "Accuracy": 0.9087,
+            "F1": 0.9083
+        },
+        "Random Forest": {
+            "Accuracy": 0.9098,
+            "F1": 0.9081
+        },
+        "XGBoost": {
+            "Accuracy": 0.9156,
+            "F1": 0.915
+        }
+    }
+}

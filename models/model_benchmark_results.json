@@ -1,0 +1,50 @@
+{
+    "best_category_model": "Linear SVM (Calibrated)",
+    "best_category_f1": 0.942757180735875,
+    "best_intent_model": "Linear SVM (Calibrated)",
+    "best_intent_f1": 0.8883527160470983,
+    "category_benchmarks": {
+        "MultinomialNB": {
+            "Accuracy": 0.9273,
+            "F1": 0.9286
+        },
+        "Logistic Regression": {
+            "Accuracy": 0.9343,
+            "F1": 0.9371
+        },
+        "Linear SVM (Calibrated)": {
+            "Accuracy": 0.9412,
+            "F1": 0.9428
+        },
+        "Random Forest": {
+            "Accuracy": 0.9135,
+            "F1": 0.9175
+        },
+        "XGBoost": {
+            "Accuracy": 0.917,
+            "F1": 0.9187
+        }
+    },
+    "intent_benchmarks": {
+        "MultinomialNB": {
+            "Accuracy": 0.8685,
+            "F1": 0.8643
+        },
+        "Logistic Regression": {
+            "Accuracy": 0.872,
+            "F1": 0.8777
+        },
+        "Linear SVM (Calibrated)": {
+            "Accuracy": 0.8893,
+            "F1": 0.8884
+        },
+        "Random Forest": {
+            "Accuracy": 0.8927,
+            "F1": 0.8879
+        },
+        "XGBoost": {
+            "Accuracy": 0.872,
+            "F1": 0.8706
+        }
+    }
+}
