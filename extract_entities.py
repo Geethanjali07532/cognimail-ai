@@ -160,53 +160,111 @@ def extract_entities(text, subject=""):
 def extract_action_item(text, entities):
     t_lower = text.lower()
     
-    # Identify Primary Action
+    # Identify Primary Action & Granular Tasks
     action = "Review and address incoming inquiry"
     team = "General Support Operations"
+    tasks = []
 
-    if "process invoice" in t_lower or entities["invoice_ids"]:
-        inv = entities["invoice_ids"][0] if entities["invoice_ids"] else "referenced invoice"
+    # Check for specific actionable directives in text
+    if entities.get("invoice_ids"):
+        inv = entities["invoice_ids"][0]
+        if any(k in t_lower for k in ["overcharge", "discrepancy", "dispute", "incorrect", "wrong"]):
+            tasks.append(f"Verify invoice {inv}")
+        else:
+            tasks.append(f"Process invoice {inv}")
         action = f"Process invoice {inv}"
-        team = "Finance & Accounts"
-    elif "ship" in t_lower or "order" in t_lower or entities["order_ids"]:
-        ord_id = entities["order_ids"][0] if entities["order_ids"] else "referenced order"
-        action = f"Fulfill and dispatch order {ord_id}"
-        team = "Sales & Fulfillment Operations"
-    elif "schedule" in t_lower or "meeting" in t_lower:
-        action = "Schedule team meeting and send calendar invite"
-    elif "password" in t_lower or "unauthorized" in t_lower or "reset" in t_lower:
-        action = "Verify security credentials and reset account access"
-    elif "system down" in t_lower or "portal" in t_lower or "error" in t_lower:
-        action = "Investigate production service error and resolve outage"
-    elif "apply" in t_lower or "resume" in t_lower or "candidate" in t_lower:
-        action = "Screen candidate application and schedule interview"
-    elif "quote" in t_lower or "pricing" in t_lower or "wholesale" in t_lower:
-        action = "Generate wholesale pricing quotation and send product catalog"
-    elif "leave" in t_lower:
-        action = "Review and approve employee leave request"
-    elif "refund" in t_lower:
+        team = "Finance"
+
+    if "overcharge" in t_lower:
+        amt_match = re.search(r'overcharge\s+of\s+([$₹€£]?\s*[\d,]+(?:\.\d{2})?)', text, re.IGNORECASE)
+        if amt_match:
+            tasks.append(f"Check {amt_match.group(1).strip()} overcharge")
+        elif entities.get("amounts"):
+            tasks.append(f"Check {entities['amounts'][-1]} overcharge")
+        else:
+            tasks.append("Audit unauthorized overcharge")
+        team = "Finance"
+
+    if "credit note" in t_lower:
+        tasks.append("Issue credit note")
+        team = "Finance"
+
+    if "refund" in t_lower:
+        amt = entities["amounts"][0] if entities.get("amounts") else ""
+        tasks.append(f"Process refund{f' of {amt}' if amt else ''}")
         action = "Audit merchant transaction and initiate refund"
+        team = "Finance"
+
+    if entities.get("order_ids"):
+        ord_id = entities["order_ids"][0]
+        if any(k in t_lower for k in ["defective", "damage", "shatter", "broken", "missing"]):
+            tasks.append(f"Inspect damaged item for order {ord_id}")
+            tasks.append(f"Dispatch replacement unit for order {ord_id}")
+            action = f"Process replacement / return for order {ord_id}"
+            team = "Operations"
+        else:
+            tasks.append(f"Fulfill and dispatch order {ord_id}")
+            action = f"Fulfill and dispatch order {ord_id}"
+            team = "Sales & Fulfillment"
+
+    if "schedule" in t_lower or "meeting" in t_lower or "calendar" in t_lower:
+        tasks.append("Schedule team meeting and send calendar invite")
+        action = "Schedule team meeting and send calendar invite"
+        team = "Operations / Admin"
+
+    if "password" in t_lower or "unauthorized" in t_lower or "reset" in t_lower or "credentials" in t_lower:
+        tasks.append("Verify security credentials and reset account access")
+        action = "Verify security credentials and reset account access"
+        team = "IT Security & Support"
+
+    if any(k in t_lower for k in ["system down", "outage", "server crash", "500 internal", "api gateway"]):
+        tasks.append("Investigate production service error and resolve outage")
+        tasks.append("Establish emergency conference bridge with SRE on-call team")
+        action = "Investigate production service error and resolve outage"
+        team = "IT Support & DevOps"
+
+    if any(k in t_lower for k in ["candidate", "resume", "job application", "senior machine learning"]):
+        tasks.append("Screen candidate application and resume")
+        tasks.append("Coordinate technical interview with engineering team")
+        action = "Screen candidate application and schedule interview"
+        team = "HR & Recruitment"
+
+    if any(k in t_lower for k in ["rfp", "procurement", "5,000 seats", "volume pricing", "quote", "pricing"]):
+        tasks.append("Review volume pricing tiers and procurement requirements")
+        tasks.append("Schedule executive product demonstration")
+        action = "Generate wholesale pricing quotation and send product catalog"
+        team = "Sales & Solutions"
 
     # Identify Deadline
     deadline = "Not specified"
-    if entities["deadlines"]:
+    if entities.get("deadlines"):
         deadline = entities["deadlines"][0]
-    elif entities["dates"]:
+        tasks.append(f"Resolve before {deadline}")
+    elif entities.get("dates") and any(w in t_lower for w in ["before", "by", "due", "until"]):
         deadline = entities["dates"][0]
-    elif entities["times"]:
+        tasks.append(f"Resolve before {deadline}")
+    elif entities.get("times") and any(w in t_lower for w in ["before", "by", "due", "until"]):
         deadline = entities["times"][0]
+        tasks.append(f"Resolve before {deadline}")
 
-    # Identify Responsible Team
-    team = "General Support Operations"
+    # Refine Department Routing if matched in text
     for key, dept in DEPARTMENT_ROUTING.items():
         if key.lower() in t_lower:
             team = dept
             break
 
+    # De-duplicate tasks while preserving order
+    unique_tasks = []
+    for t in tasks:
+        if t not in unique_tasks:
+            unique_tasks.append(t)
+
     return {
         "action": action,
+        "tasks": unique_tasks,
         "deadline": deadline,
-        "responsible_team": team
+        "responsible_team": team,
+        "department": team
     }
 
 if __name__ == "__main__":

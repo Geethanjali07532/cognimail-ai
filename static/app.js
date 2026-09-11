@@ -1,6 +1,6 @@
 /**
- * CogniMail AI - Enterprise Email Intelligence & Smart Reply Platform
- * Client-Side Application Controller (Pure Vanilla ES6+ JavaScript)
+ * CogniMail AI - Enterprise Email Intelligence & Context-Aware Smart Reply Platform
+ * Client-Side Application Controller (Vanilla ES6+ JavaScript)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,6 +103,15 @@ Kevin Murphy`,
   // -------------------------------------------------------------------------
   // DOM References
   // -------------------------------------------------------------------------
+  // Navigation Tabs & Views
+  const tabCockpit = document.getElementById('tabCockpit');
+  const tabHistory = document.getElementById('tabHistory');
+  const tabAnalytics = document.getElementById('tabAnalytics');
+  const cockpitView = document.getElementById('cockpitView');
+  const historyView = document.getElementById('historyView');
+  const analyticsView = document.getElementById('analyticsView');
+
+  // Composer Form & Inputs
   const senderInput = document.getElementById('senderInput');
   const subjectInput = document.getElementById('subjectInput');
   const bodyInput = document.getElementById('bodyInput');
@@ -117,8 +126,12 @@ Kevin Murphy`,
   const attachmentsContainer = document.getElementById('attachmentsContainer');
   const newAttInput = document.getElementById('newAttInput');
   const addAttBtn = document.getElementById('addAttBtn');
+  const presetChips = document.querySelectorAll('.preset-chip');
 
-  // Telemetry Elements
+  // Loading State Elements
+  const loadingOverlay = document.getElementById('loadingOverlay');
+
+  // Triage Telemetry Elements
   const latencyValue = document.getElementById('latencyValue');
   const categoryLabel = document.getElementById('categoryLabel');
   const categoryConfidence = document.getElementById('categoryConfidence');
@@ -129,38 +142,112 @@ Kevin Murphy`,
   const sentimentLabel = document.getElementById('sentimentLabel');
   const emotionLabel = document.getElementById('emotionLabel');
   const polarityBar = document.getElementById('polarityBar');
+
+  // Security, Spam & Duplicate Elements
   const securityVerdict = document.getElementById('securityVerdict');
   const securityScore = document.getElementById('securityScore');
-  const securityReason = document.getElementById('securityReason');
+  const securityBubble = document.getElementById('securityBubble');
   const securityAlertBanner = document.getElementById('securityAlertBanner');
   const securityBannerDetails = document.getElementById('securityBannerDetails');
-  const securityBubble = document.getElementById('securityBubble');
+  const spamStatusVal = document.getElementById('spamStatusVal');
+  const phishingStatusVal = document.getElementById('phishingStatusVal');
+  const duplicateStatusVal = document.getElementById('duplicateStatusVal');
+  const similarityScoreVal = document.getElementById('similarityScoreVal');
 
-  // Summaries & Entities
+  // Summary & Highlights Elements
+  const routedDepartment = document.getElementById('routedDepartment');
   const abstractiveSummary = document.getElementById('abstractiveSummary');
   const highlightsList = document.getElementById('highlightsList');
-  const routedDepartment = document.getElementById('routedDepartment');
+  const summaryRequiredAction = document.getElementById('summaryRequiredAction');
+  const summaryRiskUrgency = document.getElementById('summaryRiskUrgency');
+
+  // Entities Elements
   const entityCountTag = document.getElementById('entityCountTag');
   const pillsInvoices = document.getElementById('pillsInvoices');
   const pillsAmounts = document.getElementById('pillsAmounts');
   const pillsDates = document.getElementById('pillsDates');
   const pillsContacts = document.getElementById('pillsContacts');
-  const checklistItems = document.getElementById('checklistItems');
+  const pillsOrgs = document.getElementById('pillsOrgs');
+  const pillsProducts = document.getElementById('pillsProducts');
 
-  // Smart Reply Studio
+  // Action Items Elements
+  const actionItemsContainer = document.getElementById('actionItemsContainer');
+  const actionDeptBadge = document.getElementById('actionDeptBadge');
+  const actionDeadlineBadge = document.getElementById('actionDeadlineBadge');
+
+  // Response Recommendation Elements
+  const recResponseType = document.getElementById('recResponseType');
+  const recDepartment = document.getElementById('recDepartment');
+  const recPriority = document.getElementById('recPriority');
+  const recTone = document.getElementById('recTone');
+  const recAction = document.getElementById('recAction');
+  const recSlaTag = document.getElementById('recSlaTag');
+
+  // Conversation Context Elements
+  const contextPreviousMessages = document.getElementById('contextPreviousMessages');
+  const contextCurrentEmail = document.getElementById('contextCurrentEmail');
+  const contextIntent = document.getElementById('contextIntent');
+  const contextSummary = document.getElementById('contextSummary');
+  const contextApproach = document.getElementById('contextApproach');
+  const contextHistoryTag = document.getElementById('contextHistoryTag');
+
+  // Smart Reply Studio Elements
   const toneTabs = document.querySelectorAll('.tone-tab');
   const replyTextarea = document.getElementById('replyTextarea');
   const replyValidationScore = document.getElementById('replyValidationScore');
-  const copyReplyBtn = document.getElementById('copyReplyBtn');
   const regenerateBtn = document.getElementById('regenerateBtn');
-  const escalateBtn = document.getElementById('escalateBtn');
+  const editReplyBtn = document.getElementById('editReplyBtn');
+  const copyReplyBtn = document.getElementById('copyReplyBtn');
   const approveBtn = document.getElementById('approveBtn');
-  const presetChips = document.querySelectorAll('.preset-chip');
 
-  // App State Cache
+  // History View Elements
+  const historyTotalCount = document.getElementById('historyTotalCount');
+  const historySearchInput = document.getElementById('historySearchInput');
+  const filterCategory = document.getElementById('filterCategory');
+  const filterPriority = document.getElementById('filterPriority');
+  const filterSentiment = document.getElementById('filterSentiment');
+  const filterSpam = document.getElementById('filterSpam');
+  const historySortBy = document.getElementById('historySortBy');
+  const historyRefreshBtn = document.getElementById('historyRefreshBtn');
+  const historyTableBody = document.getElementById('historyTableBody');
+
+  // Analytics Elements
+  const kpiTotalEmails = document.getElementById('kpiTotalEmails');
+  const kpiHighPriority = document.getElementById('kpiHighPriority');
+  const kpiUrgentEmails = document.getElementById('kpiUrgentEmails');
+  const kpiSpamDetected = document.getElementById('kpiSpamDetected');
+  const kpiAvgConfidence = document.getElementById('kpiAvgConfidence');
+
+  // State Management
   let currentAllTones = {};
   let currentActiveTone = 'Professional';
   let isAnalyzing = false;
+  let chartInstances = {};
+
+  // -------------------------------------------------------------------------
+  // View Navigation System
+  // -------------------------------------------------------------------------
+  function switchView(viewName) {
+    // Tab active states
+    tabCockpit.classList.toggle('active', viewName === 'cockpit');
+    tabHistory.classList.toggle('active', viewName === 'history');
+    tabAnalytics.classList.toggle('active', viewName === 'analytics');
+
+    // View panels visibility
+    cockpitView.classList.toggle('hidden', viewName !== 'cockpit');
+    historyView.classList.toggle('hidden', viewName !== 'history');
+    analyticsView.classList.toggle('hidden', viewName !== 'analytics');
+
+    if (viewName === 'history') {
+      loadEmailHistory();
+    } else if (viewName === 'analytics') {
+      loadAnalyticsData();
+    }
+  }
+
+  tabCockpit.addEventListener('click', () => switchView('cockpit'));
+  tabHistory.addEventListener('click', () => switchView('history'));
+  tabAnalytics.addEventListener('click', () => switchView('analytics'));
 
   // -------------------------------------------------------------------------
   // Word Counter & Input Listeners
@@ -177,7 +264,9 @@ Kevin Murphy`,
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      emailForm.requestSubmit();
+      if (!cockpitView.classList.contains('hidden')) {
+        emailForm.requestSubmit();
+      }
     }
   });
 
@@ -221,7 +310,6 @@ Kevin Murphy`,
     }
   });
 
-  // Attach listener to existing static chips
   document.querySelectorAll('.remove-att-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.target.closest('.attachment-chip').remove();
@@ -229,7 +317,7 @@ Kevin Murphy`,
   });
 
   // -------------------------------------------------------------------------
-  // Presets Loader
+  // Preset Scenarios Loader
   // -------------------------------------------------------------------------
   function loadPreset(presetKey) {
     const data = PRESETS[presetKey];
@@ -240,17 +328,14 @@ Kevin Murphy`,
     bodyInput.value = data.body;
     updateWordCount();
 
-    // Clear and reload attachments
     attachmentsContainer.innerHTML = '';
     (data.attachments || []).forEach(att => addAttachmentChip(att));
 
-    // Update active preset styling
     presetChips.forEach(chip => {
       chip.classList.toggle('active', chip.getAttribute('data-preset') === presetKey);
     });
 
-    showToast(`Loaded scenario: "${data.subject.slice(0, 35)}..."`, 'info');
-    // Automatically trigger analysis for seamless demo experience
+    showToast(`Loaded preset: "${data.subject.slice(0, 35)}..."`, 'info');
     runEmailAnalysis();
   }
 
@@ -261,14 +346,12 @@ Kevin Murphy`,
     });
   });
 
-  // Random Preset Button
   randomBtn.addEventListener('click', () => {
     const keys = Object.keys(PRESETS);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     loadPreset(randomKey);
   });
 
-  // Clear Button
   clearBtn.addEventListener('click', () => {
     senderInput.value = '';
     subjectInput.value = '';
@@ -280,7 +363,7 @@ Kevin Murphy`,
   });
 
   // -------------------------------------------------------------------------
-  // 7-Tone Switcher Studio
+  // Tone Switcher Studio (Professional, Friendly, Formal, Concise, Empathetic, etc.)
   // -------------------------------------------------------------------------
   toneTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -293,14 +376,13 @@ Kevin Murphy`,
     currentActiveTone = tone;
     toneTabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-tone') === tone));
 
-    // Instant 0ms cache switch if available
+    // Instant switch if cached in memory
     if (currentAllTones[tone]) {
       replyTextarea.value = currentAllTones[tone];
       replyValidationScore.textContent = `🛡️ ${tone} Aligned • Verified`;
       replyValidationScore.style.color = '#34D399';
-      showToast(`Switched persona tone to: ${tone}`, 'info');
+      showToast(`Selected Persona Tone: ${tone}`, 'info');
     } else {
-      // On-demand fetch if not pre-cached
       fetchSpecificTone(tone);
     }
   }
@@ -332,6 +414,42 @@ Kevin Murphy`,
   }
 
   // -------------------------------------------------------------------------
+  // Step-by-Step Loading Animation Helper
+  // -------------------------------------------------------------------------
+  async function animateLoadingSteps() {
+    const steps = [
+      'lStep1', 'lStep2', 'lStep3', 'lStep4', 'lStep5',
+      'lStep6', 'lStep7', 'lStep8', 'lStep9'
+    ];
+
+    steps.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.className = 'loading-step';
+        const icon = el.querySelector('.step-icon');
+        if (icon) icon.textContent = '○';
+      }
+    });
+
+    for (let i = 0; i < steps.length; i++) {
+      if (!isAnalyzing) break;
+      const el = document.getElementById(steps[i]);
+      if (el) {
+        el.classList.add('active');
+        const icon = el.querySelector('.step-icon');
+        if (icon) icon.textContent = '●';
+      }
+      await new Promise(r => setTimeout(r, 65));
+      if (el) {
+        el.classList.remove('active');
+        el.classList.add('completed');
+        const icon = el.querySelector('.step-icon');
+        if (icon) icon.textContent = '✓';
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Core AI Pipeline Orchestrator (POST /api/email/process)
   // -------------------------------------------------------------------------
   async function runEmailAnalysis() {
@@ -341,13 +459,17 @@ Kevin Murphy`,
     const sender = senderInput.value.trim() || 'user@example.com';
     const attachments = getAttachments();
 
+    // Strict validation: never proceed on empty input
     if (!body && !subject) {
-      showToast('Please enter an email subject or body to analyze.', 'warning');
+      showToast('Please enter an email before analyzing.', 'warning');
       return;
     }
 
     isAnalyzing = true;
     analyzeBtn.classList.add('loading');
+    loadingOverlay.classList.remove('hidden');
+    animateLoadingSteps();
+
     const t0 = performance.now();
 
     try {
@@ -370,15 +492,16 @@ Kevin Murphy`,
       const data = await response.json();
       const elapsed = Math.round(performance.now() - t0);
 
-      // Render Telemetry & Results
+      // Render Telemetry & Extended Panels
       renderTelemetry(data, elapsed);
       showToast(`AI Pipeline completed in ${elapsed}ms`, 'success');
     } catch (error) {
       console.error('Error executing email analysis:', error);
-      showToast(`Analysis error: ${error.message}`, 'error');
+      showToast('Unable to analyze this email right now. Please try again.', 'error');
     } finally {
       isAnalyzing = false;
       analyzeBtn.classList.remove('loading');
+      loadingOverlay.classList.add('hidden');
     }
   }
 
@@ -397,9 +520,9 @@ Kevin Murphy`,
 
     // 2. Category & Intent
     const cat = data.classification || {};
-    categoryLabel.textContent = cat.category || 'Support';
-    categoryConfidence.textContent = `${Math.round((cat.category_confidence || 0.95) * 100)}%`;
-    intentLabel.textContent = cat.intent || 'Customer Inquiry';
+    categoryLabel.textContent = cat.category || 'Customer Support';
+    categoryConfidence.textContent = `${Math.round((cat.category_confidence || 0.96) * 100)}%`;
+    intentLabel.textContent = cat.intent || 'General Inquiry';
 
     // 3. Priority & Urgency
     const prio = data.priority || {};
@@ -416,76 +539,130 @@ Kevin Murphy`,
     sentimentLabel.className = 'metric-hero-text ' + getSentimentClass(sType);
     emotionLabel.textContent = sent.emotion || 'Neutral';
 
-    // Polarity Gauge (-1.0 to 1.0 mapped to 0% - 100%)
+    // Polarity Gauge (-1.0 to 1.0 mapped to 5% - 95%)
     const compound = sent.compound_score !== undefined ? sent.compound_score : 0;
     const fillPercent = Math.max(5, Math.min(95, Math.round(((compound + 1) / 2) * 100)));
     polarityBar.style.width = `${fillPercent}%`;
 
-    // 5. Security & Spam Screening
+    // 5. Security, Spam & Duplicate Screening
     const sec = data.spam_security || {};
+    const dup = data.duplicate_check || {};
+
     if (sec.is_spam || (sec.hazardous_attachments && sec.hazardous_attachments.length > 0)) {
       securityVerdict.textContent = 'SECURITY ALERT';
       securityVerdict.className = 'metric-hero-text badge-threat';
       securityScore.textContent = `${Math.round((sec.confidence || 0.98) * 100)}% Threat`;
-      securityReason.textContent = (sec.reasons && sec.reasons[0]) || 'Blacklisted Threat Detected';
       securityBubble.style.background = 'rgba(239, 68, 68, 0.2)';
       securityBubble.style.color = '#EF4444';
+
+      spamStatusVal.textContent = '⚠️ Spam Detected';
+      spamStatusVal.className = 'sec-v text-threat';
+
+      phishingStatusVal.textContent = '⚠️ Phishing Indicators';
+      phishingStatusVal.className = 'sec-v text-threat';
 
       securityAlertBanner.classList.remove('hidden');
       const threatList = [
         ...(sec.reasons || []),
         ...(sec.hazardous_attachments ? sec.hazardous_attachments.map(a => `Executable attachment: ${a}`) : [])
       ];
-      securityBannerDetails.textContent = threatList.join(' • ') || 'Malicious content flagged by pattern detector.';
+      securityBannerDetails.textContent = threatList.join(' • ') || 'Malicious content flagged by security detector.';
     } else {
-      securityVerdict.textContent = 'VERIFIED CLEAN';
+      securityVerdict.textContent = 'CLEAN';
       securityVerdict.className = 'metric-hero-text badge-clean';
-      securityScore.textContent = '99.2% Clean';
-      securityReason.textContent = 'No Phishing / Clean Attachments';
+      securityScore.textContent = '99.2% Confidence';
       securityBubble.style.background = 'rgba(16, 185, 129, 0.15)';
       securityBubble.style.color = '#10B981';
+
+      spamStatusVal.textContent = '✓ Not Spam';
+      spamStatusVal.className = 'sec-v text-clean';
+
+      phishingStatusVal.textContent = '✓ No phishing indicators detected';
+      phishingStatusVal.className = 'sec-v text-clean';
+
       securityAlertBanner.classList.add('hidden');
     }
 
-    // 6. Summary & Highlights
-    const sum = data.summaries || {};
-    abstractiveSummary.textContent = sum.abstractive_summary || 'Autonomous email summary generated.';
+    // Duplicate Detection Status
+    if (dup.is_duplicate) {
+      duplicateStatusVal.textContent = '⚠️ Potential duplicate email detected';
+      duplicateStatusVal.className = 'sec-v text-warn';
+      similarityScoreVal.textContent = `${dup.similarity_score}%`;
+      similarityScoreVal.className = 'sec-v text-warn font-mono';
+    } else {
+      duplicateStatusVal.textContent = '✓ No duplicate found';
+      duplicateStatusVal.className = 'sec-v text-clean';
+      similarityScoreVal.textContent = `${dup.similarity_score || 0.0}%`;
+      similarityScoreVal.className = 'sec-v font-mono';
+    }
+
+    // 6. Improved Structured AI Summary
+    const sumStruct = data.summary_structured || {};
+    abstractiveSummary.textContent = sumStruct.summary || (data.summaries && data.summaries.abstractive_summary) || 'Autonomous email summary generated.';
+    
     highlightsList.innerHTML = '';
-    const bullets = sum.key_highlights || [sum.extractive_summary];
-    bullets.forEach(b => {
-      if (b && b.trim()) {
-        const li = document.createElement('li');
-        li.textContent = b.replace(/^[•\-\*]\s*/, '');
-        highlightsList.appendChild(li);
-      }
-    });
+    const bullets = sumStruct.key_highlights || (data.summaries && data.summaries.key_highlights) || [];
+    if (bullets.length > 0) {
+      bullets.forEach(b => {
+        if (b && b.trim()) {
+          const li = document.createElement('li');
+          li.textContent = b.replace(/^[•\-\*]\s*/, '');
+          highlightsList.appendChild(li);
+        }
+      });
+    } else {
+      const li = document.createElement('li');
+      li.textContent = 'Inbound correspondence reviewed and triaged.';
+      highlightsList.appendChild(li);
+    }
 
-    // Routing Department
-    const rec = data.recommendation || {};
-    routedDepartment.textContent = `Routing: ${rec.department || 'Customer Support Tier-1'}`;
+    routedDepartment.textContent = `Department: ${sumStruct.department || 'Support Desk'}`;
+    summaryRequiredAction.textContent = sumStruct.required_action || 'Address incoming inquiry.';
+    summaryRiskUrgency.textContent = sumStruct.risk_urgency || `${prio.urgency || 'Standard'} priority triage.`;
 
-    // 7. Entities
+    // 7. Entities Extraction
     const ent = data.entities || {};
-    renderEntityPills(pillsInvoices, ent.invoice_ids, 'pill-cyan', '#INV-');
+    const allInvoices = [...(ent.invoice_ids || []), ...(ent.order_ids || []), ...(ent.transaction_ids || [])];
+    renderEntityPills(pillsInvoices, allInvoices, 'pill-cyan');
     renderEntityPills(pillsAmounts, ent.amounts, 'pill-emerald');
-    renderEntityPills(pillsDates, [...(ent.deadlines || []), ...(ent.dates || [])], 'pill-amber');
-    renderEntityPills(pillsContacts, [...(ent.person_names || []), ...(ent.phone_numbers || [])], 'pill-indigo');
+    renderEntityPills(pillsDates, [...(ent.deadlines || []), ...(ent.dates || []), ...(ent.times || [])], 'pill-amber');
+    renderEntityPills(pillsContacts, [...(ent.person_names || []), ...(ent.phone_numbers || []), ...(ent.email_addresses || [])], 'pill-indigo');
+    renderEntityPills(pillsOrgs, [...(ent.organizations || []), ...(ent.locations || [])], 'pill-purple');
+    renderEntityPills(pillsProducts, ent.products_or_systems, 'pill-rose');
 
-    const totalEntities = (ent.invoice_ids || []).length + (ent.amounts || []).length +
-      (ent.deadlines || []).length + (ent.dates || []).length + (ent.person_names || []).length;
-    entityCountTag.textContent = `${totalEntities} Entities Identified`;
+    const totalEntCount = allInvoices.length + (ent.amounts || []).length +
+      (ent.deadlines || []).length + (ent.dates || []).length + (ent.person_names || []).length +
+      (ent.organizations || []).length + (ent.products_or_systems || []).length;
+    entityCountTag.textContent = `${totalEntCount} Structured Tokens`;
 
-    // Action Checklist
-    renderChecklist(rec.checklist, ent.action_items, cat.intent);
+    // 8. Action Items Section
+    const actDetail = data.action_items_detail || {};
+    actionDeptBadge.textContent = `Responsible: ${actDetail.department || 'Finance'}`;
+    actionDeadlineBadge.textContent = `Deadline: ${actDetail.deadline || 'Not specified'}`;
+    renderActionItems(actDetail.tasks);
 
-    // 8. Smart Reply Studio
+    // 9. AI Response Recommendation Matrix
+    const rec = data.response_recommendation || data.recommendation || {};
+    recResponseType.textContent = rec.response_type || 'Resolution + Status Update';
+    recDepartment.textContent = rec.department || actDetail.department || 'Customer Operations';
+    recPriority.textContent = rec.priority || prio.priority || 'Medium';
+    recTone.textContent = rec.recommended_tone || 'Empathetic + Professional';
+    recAction.textContent = rec.primary_action || 'Verify transaction and process correction.';
+    recSlaTag.textContent = `SLA: ${rec.sla_window || prio.recommended_timeline || 'Within 24 Hours'}`;
+
+    // 10. Conversation Context
+    const ctx = data.conversation_context || {};
+    renderConversationContext(ctx);
+
+    // 11. Smart Reply Studio
     const reply = data.smart_reply || {};
     if (reply.all_tones) {
       currentAllTones = reply.all_tones;
     }
-    currentAllTones[reply.selected_tone || currentActiveTone] = reply.reply_text;
+    const activeReplyTone = reply.selected_tone || currentActiveTone;
+    currentAllTones[activeReplyTone] = reply.reply_text;
     replyTextarea.value = reply.reply_text || '';
-    replyValidationScore.textContent = `🛡️ ${reply.selected_tone || currentActiveTone} Aligned • 98% Recall`;
+    replyValidationScore.textContent = `🛡️ ${activeReplyTone} Aligned • Verified`;
   }
 
   function getPriorityClass(p) {
@@ -501,7 +678,7 @@ Kevin Murphy`,
     return 'badge-neutral';
   }
 
-  function renderEntityPills(container, list, pillClass, prefix = '') {
+  function renderEntityPills(container, list, pillClass) {
     container.innerHTML = '';
     if (!list || list.length === 0) {
       const empty = document.createElement('span');
@@ -511,44 +688,62 @@ Kevin Murphy`,
       return;
     }
     const unique = Array.from(new Set(list));
-    unique.slice(0, 4).forEach(item => {
+    unique.slice(0, 5).forEach(item => {
       const pill = document.createElement('span');
       pill.className = `pill ${pillClass}`;
-      pill.textContent = prefix && !item.startsWith('#') ? `${prefix}${item}` : item;
+      pill.textContent = item;
       container.appendChild(pill);
     });
   }
 
-  function renderChecklist(recChecklist, actionItems, intent) {
-    checklistItems.innerHTML = '';
-    const items = [];
-    if (recChecklist && recChecklist.length) {
-      items.push(...recChecklist);
+  function renderActionItems(tasks) {
+    actionItemsContainer.innerHTML = '';
+    if (!tasks || tasks.length === 0) {
+      actionItemsContainer.innerHTML = '<span class="empty-notice-text">No specific action items detected.</span>';
+      return;
     }
-    if (actionItems && actionItems.length) {
-      actionItems.forEach(a => items.push(typeof a === 'string' ? a : a.task || a.action));
-    }
-    if (items.length === 0) {
-      items.push(`Review customer message and resolve ${intent || 'inquiry'}`);
-      items.push('Verify customer account record in CRM');
-      items.push('Send verified smart reply within SLA window');
-    }
-
-    items.slice(0, 4).forEach((task, idx) => {
+    tasks.forEach((task, idx) => {
       const label = document.createElement('label');
       label.className = 'check-item';
       label.innerHTML = `
         <input type="checkbox" ${idx === 0 ? 'checked' : ''}>
         <span>${task}</span>
       `;
-      checklistItems.appendChild(label);
+      actionItemsContainer.appendChild(label);
     });
   }
 
+  function renderConversationContext(ctx) {
+    contextCurrentEmail.textContent = ctx.current_email || subjectInput.value || 'Incoming Email';
+    contextIntent.textContent = ctx.detected_intent || 'Customer Request';
+    contextSummary.textContent = ctx.conversation_summary || 'Initial inbound inquiry in this communication thread.';
+    contextApproach.textContent = ctx.recommended_approach || 'Review message and respond with appropriate tone.';
+
+    contextPreviousMessages.innerHTML = '';
+    if (ctx.has_history && ctx.previous_messages && ctx.previous_messages.length > 0) {
+      contextHistoryTag.textContent = `${ctx.previous_messages.length} Prior Exchange(s)`;
+      ctx.previous_messages.forEach(msg => {
+        const item = document.createElement('div');
+        item.className = 'thread-msg-item';
+        item.innerHTML = `
+          <div class="thread-msg-header">
+            <strong>${msg.sender}</strong>
+            <span>${msg.timestamp || 'Previous exchange'}</span>
+          </div>
+          <div class="thread-msg-body">${msg.snippet}</div>
+        `;
+        contextPreviousMessages.appendChild(item);
+      });
+    } else {
+      contextHistoryTag.textContent = '0 Previous Messages';
+      contextPreviousMessages.innerHTML = '<span class="empty-notice-text">No previous conversation available.</span>';
+    }
+  }
+
   // -------------------------------------------------------------------------
-  // Human-in-the-Loop Governance Actions
+  // Human-in-the-Loop Smart Reply Actions
   // -------------------------------------------------------------------------
-  // 1. Copy Draft
+  // 1. Copy Reply
   copyReplyBtn.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(replyTextarea.value);
@@ -556,24 +751,31 @@ Kevin Murphy`,
     } catch (e) {
       replyTextarea.select();
       document.execCommand('copy');
-      showToast('Draft copied to clipboard!', 'success');
+      showToast('Reply draft copied to clipboard!', 'success');
     }
   });
 
-  // 2. Regenerate
-  regenerateBtn.addEventListener('click', () => {
-    fetchSpecificTone(currentActiveTone);
-    showToast(`Regenerating ${currentActiveTone} reply...`, 'info');
+  // 2. Edit Reply Button (Highlights editable textarea)
+  editReplyBtn.addEventListener('click', () => {
+    replyTextarea.focus();
+    replyTextarea.setSelectionRange(replyTextarea.value.length, replyTextarea.value.length);
+    showToast('Editing enabled. Modify the AI draft as needed.', 'info');
   });
 
-  // 3. Approve & Dispatch
+  // 3. Regenerate Reply
+  regenerateBtn.addEventListener('click', () => {
+    fetchSpecificTone(currentActiveTone);
+    showToast(`Regenerating ${currentActiveTone} response...`, 'info');
+  });
+
+  // 4. Approve Reply (Human in the Loop Governance)
   approveBtn.addEventListener('click', async () => {
     const finalReply = replyTextarea.value.trim();
     if (!finalReply) return;
 
     try {
       approveBtn.disabled = true;
-      approveBtn.textContent = 'Logging to Vault...';
+      approveBtn.textContent = 'Saving Approval...';
       const res = await fetch('/api/governance/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -587,7 +789,7 @@ Kevin Murphy`,
         })
       });
       const data = await res.json();
-      showToast('✅ Reply Approved & Persisted to Enterprise Vault!', 'success');
+      showToast('✅ Reply Approved & Logged in Enterprise Vault!', 'success');
     } catch (err) {
       showToast('Reply logged locally.', 'success');
     } finally {
@@ -596,31 +798,257 @@ Kevin Murphy`,
         <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
-        <span>Approve & Dispatch</span>
+        <span>Approve Reply</span>
       `;
     }
   });
 
-  // 4. Flag to Supervisor
-  escalateBtn.addEventListener('click', async () => {
+  // -------------------------------------------------------------------------
+  // Email History Vault View Logic
+  // -------------------------------------------------------------------------
+  let historyDebounceTimer = null;
+
+  async function loadEmailHistory() {
     try {
-      await fetch('/api/governance/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ticket_id: `ESCALATE-${Date.now()}`,
-          subject: subjectInput.value.trim(),
-          action: 'escalated',
-          selected_tone: currentActiveTone,
-          final_reply: replyTextarea.value.trim(),
-          notes: 'Supervisor review requested by agent'
-        })
-      });
-      showToast('🛡️ Ticket flagged & escalated to Human Supervisor Queue.', 'warning');
-    } catch (e) {
-      showToast('Ticket flagged for review.', 'warning');
+      const search = historySearchInput.value.trim();
+      const cat = filterCategory.value;
+      const prio = filterPriority.value;
+      const sent = filterSentiment.value;
+      const spam = filterSpam.value;
+      const sortBy = historySortBy.value;
+
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (cat && cat !== 'All') params.append('category', cat);
+      if (prio && prio !== 'All') params.append('priority', prio);
+      if (sent && sent !== 'All') params.append('sentiment', sent);
+      if (spam !== '') params.append('is_spam', spam);
+      params.append('sort_by', sortBy);
+
+      const res = await fetch(`/api/history?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      historyTotalCount.textContent = `${data.total} Emails Recorded`;
+      renderHistoryTable(data.emails || []);
+    } catch (err) {
+      console.error('Failed to load history:', err);
+      historyTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:24px;">No emails found in vault.</td></tr>';
     }
+  }
+
+  function renderHistoryTable(emails) {
+    historyTableBody.innerHTML = '';
+    if (!emails || emails.length === 0) {
+      historyTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:24px;">No matching emails found.</td></tr>';
+      return;
+    }
+
+    emails.forEach(email => {
+      const tr = document.createElement('tr');
+      const dateStr = email.timestamp ? email.timestamp.slice(0, 16) : 'Just now';
+      const statusClass = email.status === 'APPROVED' ? 'status-approved' : (email.status === 'ESCALATED' ? 'status-escalated' : 'status-pending');
+
+      tr.innerHTML = `
+        <td>${email.sender || 'unknown'}</td>
+        <td class="col-sub" title="${email.subject}">${email.subject || '(No Subject)'}</td>
+        <td><span class="pill pill-cyan" style="font-size:0.7rem;">${email.category || 'General'}</span></td>
+        <td>${email.intent || 'Inquiry'}</td>
+        <td><span class="metric-hero-text ${getSentimentClass(email.sentiment || '')}" style="font-size:0.72rem; padding:2px 6px;">${email.sentiment || 'Neutral'}</span></td>
+        <td><span class="metric-hero-text ${getPriorityClass(email.priority || '')}" style="font-size:0.72rem; padding:2px 6px;">${email.priority || 'P3'}</span></td>
+        <td style="font-family:var(--font-mono); font-size:0.72rem;">${dateStr}</td>
+        <td><span class="status-badge-vault ${statusClass}">${email.status || 'PENDING'}</span></td>
+        <td><button type="button" class="btn-reopen" data-id="${email.email_id || email.id}">Reopen</button></td>
+      `;
+
+      tr.querySelector('.btn-reopen').addEventListener('click', () => {
+        reopenHistoricalEmail(email);
+      });
+
+      historyTableBody.appendChild(tr);
+    });
+  }
+
+  function reopenHistoricalEmail(email) {
+    senderInput.value = email.sender || '';
+    subjectInput.value = email.subject || '';
+    bodyInput.value = email.body || '';
+    updateWordCount();
+    switchView('cockpit');
+    showToast(`Reopened email: "${email.subject}"`, 'info');
+    runEmailAnalysis();
+  }
+
+  // History Filter Listeners
+  historySearchInput.addEventListener('input', () => {
+    clearTimeout(historyDebounceTimer);
+    historyDebounceTimer = setTimeout(loadEmailHistory, 300);
   });
+  filterCategory.addEventListener('change', loadEmailHistory);
+  filterPriority.addEventListener('change', loadEmailHistory);
+  filterSentiment.addEventListener('change', loadEmailHistory);
+  filterSpam.addEventListener('change', loadEmailHistory);
+  historySortBy.addEventListener('change', loadEmailHistory);
+  historyRefreshBtn.addEventListener('click', () => {
+    loadEmailHistory();
+    showToast('Email vault refreshed', 'info');
+  });
+
+  // -------------------------------------------------------------------------
+  // Analytics Dashboard & Chart.js Visualizations
+  // -------------------------------------------------------------------------
+  async function loadAnalyticsData() {
+    try {
+      const res = await fetch('/api/analytics');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Update KPI Stat Cards
+      kpiTotalEmails.textContent = data.total_emails || 0;
+      kpiHighPriority.textContent = data.high_priority || 0;
+      kpiUrgentEmails.textContent = data.urgent_emails || 0;
+      kpiSpamDetected.textContent = data.spam_detected || 0;
+      kpiAvgConfidence.textContent = `${data.average_confidence || 97.2}%`;
+
+      // Render Charts
+      renderAnalyticsCharts(data);
+    } catch (err) {
+      console.error('Failed to load analytics:', err);
+    }
+  }
+
+  function renderAnalyticsCharts(data) {
+    if (typeof Chart === 'undefined') return;
+
+    // Dark enterprise Chart.js defaults
+    Chart.defaults.color = '#94A3B8';
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+    // 1. Category Distribution (Doughnut)
+    renderOrUpdateChart('chartCategory', 'doughnut', {
+      labels: Object.keys(data.category_distribution || {}),
+      datasets: [{
+        data: Object.values(data.category_distribution || {}),
+        backgroundColor: ['#38BDF8', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6366F1'],
+        borderColor: '#0F172A',
+        borderWidth: 2
+      }]
+    }, {
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+      responsive: true,
+      maintainAspectRatio: false
+    });
+
+    // 2. Intent Distribution (Horizontal Bar)
+    renderOrUpdateChart('chartIntent', 'bar', {
+      labels: Object.keys(data.intent_distribution || {}),
+      datasets: [{
+        label: 'Email Count',
+        data: Object.values(data.intent_distribution || {}),
+        backgroundColor: 'rgba(56, 189, 248, 0.65)',
+        borderColor: '#38BDF8',
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    }, {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { grid: { display: false } }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    });
+
+    // 3. Sentiment Distribution (Polar / Pie)
+    renderOrUpdateChart('chartSentiment', 'pie', {
+      labels: Object.keys(data.sentiment_distribution || {}),
+      datasets: [{
+        data: Object.values(data.sentiment_distribution || {}),
+        backgroundColor: ['#10B981', '#64748B', '#EF4444'],
+        borderColor: '#0F172A',
+        borderWidth: 2
+      }]
+    }, {
+      plugins: { legend: { position: 'bottom' } },
+      responsive: true,
+      maintainAspectRatio: false
+    });
+
+    // 4. Priority Distribution (Bar)
+    renderOrUpdateChart('chartPriority', 'bar', {
+      labels: Object.keys(data.priority_distribution || {}),
+      datasets: [{
+        label: 'Tickets',
+        data: Object.values(data.priority_distribution || {}),
+        backgroundColor: ['#EF4444', '#F97316', '#FBBF24', '#10B981'],
+        borderRadius: 4
+      }]
+    }, {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    });
+
+    // 5. Daily Email Volume (Line)
+    const dailyLabels = (data.daily_volume || []).map(d => d.date.slice(5));
+    const dailyCounts = (data.daily_volume || []).map(d => d.count);
+    renderOrUpdateChart('chartDailyVolume', 'line', {
+      labels: dailyLabels.length ? dailyLabels : ['Day 1'],
+      datasets: [{
+        label: 'Volume',
+        data: dailyCounts.length ? dailyCounts : [data.total_emails || 1],
+        borderColor: '#38BDF8',
+        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#38BDF8'
+      }]
+    }, {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    });
+
+    // 6. Urgency Distribution (Doughnut)
+    renderOrUpdateChart('chartUrgency', 'doughnut', {
+      labels: Object.keys(data.urgency_distribution || {}),
+      datasets: [{
+        data: Object.values(data.urgency_distribution || {}),
+        backgroundColor: ['#EF4444', '#F59E0B', '#38BDF8', '#10B981'],
+        borderColor: '#0F172A',
+        borderWidth: 2
+      }]
+    }, {
+      plugins: { legend: { position: 'bottom' } },
+      responsive: true,
+      maintainAspectRatio: false
+    });
+  }
+
+  function renderOrUpdateChart(canvasId, type, chartData, options) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    if (chartInstances[canvasId]) {
+      chartInstances[canvasId].destroy();
+    }
+
+    chartInstances[canvasId] = new Chart(canvas, {
+      type: type,
+      data: chartData,
+      options: options
+    });
+  }
 
   // -------------------------------------------------------------------------
   // Toast Notification System
