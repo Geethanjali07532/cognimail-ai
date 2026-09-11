@@ -23,6 +23,7 @@ import json
 import re
 import sqlite3
 import functools
+import shutil
 from typing import List, Dict, Optional, Any
 from contextlib import asynccontextmanager
 
@@ -999,6 +1000,18 @@ static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 if not os.path.exists(static_dir):
     os.makedirs(static_dir, exist_ok=True)
 
+# Auto-sync nested static folder if uploaded into static/static
+nested_static = os.path.join(static_dir, "static")
+if os.path.exists(nested_static) and os.path.isdir(nested_static):
+    for f in os.listdir(nested_static):
+        src = os.path.join(nested_static, f)
+        dst = os.path.join(static_dir, f)
+        if os.path.isfile(src):
+            try:
+                shutil.copy2(src, dst)
+            except Exception:
+                pass
+
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
@@ -1006,8 +1019,11 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 def serve_dashboard():
     """Serve the modern CogniMail AI Web Cockpit."""
     index_file = os.path.join(static_dir, "index.html")
+    nested_index = os.path.join(static_dir, "static", "index.html")
+    if os.path.exists(nested_index):
+        index_file = nested_index
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        return FileResponse(index_file, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     return {
         "status": "online",
         "service": "AI Email Intelligence Platform",
